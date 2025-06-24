@@ -2,113 +2,207 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>배너 합성 툴</title>
+<title>배너 합성 사이트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  #canvasWrapper { border: 1px solid #ddd; display: inline-block; margin-top: 20px; }
-  button { margin: 5px; }
+    body { padding: 20px; }
+    .preview-canvas {
+        border: 1px solid #ccc;
+        margin-top: 20px;
+        max-width: 100%;
+        height: auto;
+    }
+    .btn-group { margin-bottom: 20px; flex-wrap: wrap; }
+    @media (max-width: 768px) {
+        .btn-group button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
 </style>
 </head>
 <body>
 
-<h2>배너 합성 툴</h2>
+<h3>배너 합성 사이트</h3>
 
-<input type="file" id="uploadImage" accept="image/*"><br><br>
-
-<button onclick="setFormat('biz2_1')">Biz 2:1</button>
-<button onclick="setFormat('biz1_1')">Biz 1:1</button>
-<button onclick="setFormat('mo2_1')">Mo 2:1</button>
-<button onclick="download()">다운로드</button>
-<button onclick="resetCanvas()">초기화</button>
-
-<div id="canvasWrapper">
-  <canvas id="bannerCanvas"></canvas>
+<div class="btn-group" role="group">
+    <button class="btn btn-primary" id="btn-biz-2-1">Biz 2:1</button>
+    <button class="btn btn-primary" id="btn-biz-1-1">Biz 1:1</button>
+    <button class="btn btn-primary" id="btn-mo-2-1">Mo 2:1</button>
 </div>
 
+<div class="mt-3">
+    <label class="form-label">예시 비주얼 업로드</label>
+    <input type="file" id="example-upload" accept="image/*" disabled>
+</div>
+
+<div class="mt-3">
+    <label class="form-label">합성 희망 비주얼 업로드 (여러 개 가능)</label>
+    <input type="file" id="image-upload" accept="image/*" multiple disabled>
+</div>
+
+<canvas id="preview-canvas" class="preview-canvas"></canvas>
+
+<div class="mt-3">
+    <button class="btn btn-success" id="download-btn" disabled>다운로드</button>
+    <button class="btn btn-secondary" id="reset-btn">초기화</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
-const canvas = document.getElementById('bannerCanvas');
+
+let currentFormat = null;
+let exampleImg = null;
+const exampleInput = document.getElementById('example-upload');
+const uploadInput = document.getElementById('image-upload');
+const canvas = document.getElementById('preview-canvas');
 const ctx = canvas.getContext('2d');
-let uploadedImage = null;
+const downloadBtn = document.getElementById('download-btn');
 
-function setFormat(format) {
-  const img = uploadedImage;
-  if (!img) {
-    alert('이미지를 먼저 업로드하세요.');
-    return;
-  }
-
-  if (format === 'biz2_1') {
-    canvas.width = 600;
-    canvas.height = 300;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    const targetWidth = 600;
-    const targetHeight = 300;
-    
-    const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
-    const newWidth = img.width * scale;
-    const newHeight = img.height * scale;
-    const offsetX = (targetWidth - newWidth) / 2;
-    const offsetY = (targetHeight - newHeight) / 2;
-    
-    ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
-
-  } else if (format === 'biz1_1') {
-    canvas.width = 315;
-    canvas.height = 315;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const targetWidth = 315;
-    const targetHeight = 315;
-
-    const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
-    const newWidth = img.width * scale;
-    const newHeight = img.height * scale;
-    const offsetX = (targetWidth - newWidth) / 2;
-    const offsetY = (targetHeight - newHeight) / 2;
-
-    ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
-
-  } else if (format === 'mo2_1') {
-    canvas.width = 1200;
-    canvas.height = 600;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const visualWidth = 1200;
-    const visualHeight = 497;
-    const topMargin = 193;
-
-    ctx.drawImage(img, 0, topMargin, visualWidth, visualHeight);
-  }
-}
-
-document.getElementById('uploadImage').addEventListener('change', function(e) {
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const img = new Image();
-    img.onload = function() {
-      uploadedImage = img;
-      alert('이미지가 업로드되었습니다.');
+const formats = {
+    "biz-2-1": {
+        width: 1029,
+        height: 258,
+        visualWidth: 315,
+        visualHeight: 186,
+        left: 48,
+        top: 36,
+        round: 15,
+        type: "png"
+    },
+    "biz-1-1": {
+        width: 1029,
+        height: 258,
+        visualWidth: 232,
+        visualHeight: 232,
+        left: 260,
+        top: 13,
+        round: 15,
+        type: "png"
+    },
+    "mo-2-1": {
+        width: 1200,
+        height: 600,
+        visualWidth: 1200,
+        visualHeight: 497,
+        left: 0,
+        top: 193,
+        round: 0,
+        type: "jpg"
     }
-    img.src = event.target.result;
-  }
-  reader.readAsDataURL(e.target.files[0]);
-});
+};
 
-function download() {
-  const link = document.createElement('a');
-  link.download = 'banner.png';
-  link.href = canvas.toDataURL();
-  link.click();
+document.getElementById('btn-biz-2-1').onclick = () => setFormat('biz-2-1');
+document.getElementById('btn-biz-1-1').onclick = () => setFormat('biz-1-1');
+document.getElementById('btn-mo-2-1').onclick = () => setFormat('mo-2-1');
+document.getElementById('reset-btn').onclick = resetAll;
+downloadBtn.onclick = downloadImages;
+
+function setFormat(formatKey) {
+    currentFormat = formats[formatKey];
+    exampleInput.disabled = false;
+    uploadInput.disabled = true;
+    uploadInput.value = '';
+    exampleInput.value = '';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = currentFormat.width;
+    canvas.height = currentFormat.height;
+    downloadBtn.disabled = true;
+    exampleImg = null;
 }
 
-function resetCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  uploadedImage = null;
-  canvas.width = 0;
-  canvas.height = 0;
+exampleInput.onchange = () => {
+    if (!currentFormat) return;
+    const file = exampleInput.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+        exampleImg = img;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        uploadInput.disabled = false;
+    };
+    img.src = URL.createObjectURL(file);
+};
+
+uploadInput.onchange = () => {
+    if (!currentFormat || !exampleImg) return;
+
+    const files = uploadInput.files;
+    if (files.length === 0) return;
+
+    const zip = new JSZip();
+    let processedCount = 0;
+
+    Array.from(files).forEach(file => {
+        const img = new Image();
+        img.onload = () => {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(exampleImg, 0, 0, canvas.width, canvas.height);
+
+            if (currentFormat.round > 0) {
+                ctx.save();
+                roundRect(ctx, currentFormat.left, currentFormat.top, currentFormat.visualWidth, currentFormat.visualHeight, currentFormat.round);
+                ctx.clip();
+            }
+
+            ctx.drawImage(img, currentFormat.left, currentFormat.top, currentFormat.visualWidth, currentFormat.visualHeight);
+
+            if (currentFormat.round > 0) ctx.restore();
+
+            const outputType = currentFormat.type === "png" ? "image/png" : "image/jpeg";
+            const dataUrl = canvas.toDataURL(outputType, 1.0);
+            const base64 = dataUrl.split(',')[1];
+            zip.file(file.name.replace(/\.[^/.]+$/, "") + "." + currentFormat.type, base64, { base64: true });
+
+            processedCount++;
+            if (processedCount === files.length) {
+                downloadBtn.disabled = false;
+                downloadBtn.zip = zip;
+            }
+        };
+        img.src = URL.createObjectURL(file);
+    });
+};
+
+function downloadImages() {
+    downloadBtn.zip.generateAsync({ type: "blob" }).then(content => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = "banners.zip";
+        a.click();
+    });
 }
+
+function resetAll() {
+    uploadInput.value = '';
+    exampleInput.value = '';
+    uploadInput.disabled = true;
+    exampleInput.disabled = true;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    downloadBtn.disabled = true;
+    currentFormat = null;
+    exampleImg = null;
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
 </script>
-
 </body>
 </html>
