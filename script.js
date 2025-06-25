@@ -39,17 +39,17 @@ function composeBanner(format) {
         let canvasWidth, canvasHeight, visualX, visualY, visualWidth, visualHeight;
 
         if (format === 'biz2_1') {
-            canvasWidth = 1200;
-            canvasHeight = 600;
-            visualWidth = 1200;
-            visualHeight = 497;
+            canvasWidth = 1029;
+            canvasHeight = 258;
+            visualWidth = 315;
+            visualHeight = 186;
             visualX = 0;
             visualY = (canvasHeight - visualHeight) / 2;
         } else if (format === 'biz1_1') {
-            canvasWidth = 600;
-            canvasHeight = 600;
-            visualWidth = 600;
-            visualHeight = 600;
+            canvasWidth = 1029;
+            canvasHeight = 258;
+            visualWidth = 186;
+            visualHeight = 186;
             visualX = 0;
             visualY = 0;
         } else if (format === 'mo2_1') {
