@@ -1,208 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>배너 합성 사이트</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    body { padding: 20px; }
-    .preview-canvas {
-        border: 1px solid #ccc;
-        margin-top: 20px;
-        max-width: 100%;
-        height: auto;
-    }
-    .btn-group { margin-bottom: 20px; flex-wrap: wrap; }
-    @media (max-width: 768px) {
-        .btn-group button {
-            width: 100%;
-            margin-bottom: 5px;
-        }
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>배너 합성 사이트</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <h1>배너 합성 사이트</h1>
 
-<h3>배너 합성 사이트</h3>
+    <div class="upload-section">
+        <label>예시 비주얼 업로드:</label>
+        <input type="file" id="sampleVisual" accept="image/*">
+    </div>
 
-<div class="btn-group" role="group">
-    <button class="btn btn-primary" id="btn-biz-2-1">Biz 2:1</button>
-    <button class="btn btn-primary" id="btn-biz-1-1">Biz 1:1</button>
-    <button class="btn btn-primary" id="btn-mo-2-1">Mo 2:1</button>
-</div>
+    <div class="upload-section">
+        <label>합성 희망 비주얼 업로드 (여러 개 가능):</label>
+        <input type="file" id="compositionVisuals" accept="image/*" multiple>
+    </div>
 
-<div class="mt-3">
-    <label class="form-label">예시 비주얼 업로드</label>
-    <input type="file" id="example-upload" accept="image/*" disabled>
-</div>
+    <div class="button-section">
+        <button onclick="composeBanner('biz2_1')">Biz 2:1 합성</button>
+        <button onclick="composeBanner('biz1_1')">Biz 1:1 합성</button>
+        <button onclick="composeBanner('mo2_1')">Mo 2:1 합성</button>
+    </div>
 
-<div class="mt-3">
-    <label class="form-label">합성 희망 비주얼 업로드 (여러 개 가능)</label>
-    <input type="file" id="image-upload" accept="image/*" multiple disabled>
-</div>
+    <div>
+        <button onclick="downloadZip()">ZIP 다운로드</button>
+    </div>
 
-<canvas id="preview-canvas" class="preview-canvas"></canvas>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-<div class="mt-3">
-    <button class="btn btn-success" id="download-btn" disabled>다운로드</button>
-    <button class="btn btn-secondary" id="reset-btn">초기화</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script>
-
-let currentFormat = null;
-let exampleImg = null;
-const exampleInput = document.getElementById('example-upload');
-const uploadInput = document.getElementById('image-upload');
-const canvas = document.getElementById('preview-canvas');
-const ctx = canvas.getContext('2d');
-const downloadBtn = document.getElementById('download-btn');
-
-const formats = {
-    "biz-2-1": {
-        width: 1029,
-        height: 258,
-        visualWidth: 315,
-        visualHeight: 186,
-        left: 48,
-        top: 36,
-        round: 15,
-        type: "png"
-    },
-    "biz-1-1": {
-        width: 1029,
-        height: 258,
-        visualWidth: 232,
-        visualHeight: 232,
-        left: 260,
-        top: 13,
-        round: 15,
-        type: "png"
-    },
-    "mo-2-1": {
-        width: 1200,
-        height: 600,
-        visualWidth: 1200,
-        visualHeight: 497,
-        left: 0,
-        top: 193,
-        round: 0,
-        type: "jpg"
-    }
-};
-
-document.getElementById('btn-biz-2-1').onclick = () => setFormat('biz-2-1');
-document.getElementById('btn-biz-1-1').onclick = () => setFormat('biz-1-1');
-document.getElementById('btn-mo-2-1').onclick = () => setFormat('mo-2-1');
-document.getElementById('reset-btn').onclick = resetAll;
-downloadBtn.onclick = downloadImages;
-
-function setFormat(formatKey) {
-    currentFormat = formats[formatKey];
-    exampleInput.disabled = false;
-    uploadInput.disabled = true;
-    uploadInput.value = '';
-    exampleInput.value = '';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.width = currentFormat.width;
-    canvas.height = currentFormat.height;
-    downloadBtn.disabled = true;
-    exampleImg = null;
-}
-
-exampleInput.onchange = () => {
-    if (!currentFormat) return;
-    const file = exampleInput.files[0];
-    if (!file) return;
-
-    const img = new Image();
-    img.onload = () => {
-        exampleImg = img;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        uploadInput.disabled = false;
-    };
-    img.src = URL.createObjectURL(file);
-};
-
-uploadInput.onchange = () => {
-    if (!currentFormat || !exampleImg) return;
-
-    const files = uploadInput.files;
-    if (files.length === 0) return;
-
-    const zip = new JSZip();
-    let processedCount = 0;
-
-    Array.from(files).forEach(file => {
-        const img = new Image();
-        img.onload = () => {
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(exampleImg, 0, 0, canvas.width, canvas.height);
-
-            if (currentFormat.round > 0) {
-                ctx.save();
-                roundRect(ctx, currentFormat.left, currentFormat.top, currentFormat.visualWidth, currentFormat.visualHeight, currentFormat.round);
-                ctx.clip();
-            }
-
-            ctx.drawImage(img, currentFormat.left, currentFormat.top, currentFormat.visualWidth, currentFormat.visualHeight);
-
-            if (currentFormat.round > 0) ctx.restore();
-
-            const outputType = currentFormat.type === "png" ? "image/png" : "image/jpeg";
-            const dataUrl = canvas.toDataURL(outputType, 1.0);
-            const base64 = dataUrl.split(',')[1];
-            zip.file(file.name.replace(/\.[^/.]+$/, "") + "." + currentFormat.type, base64, { base64: true });
-
-            processedCount++;
-            if (processedCount === files.length) {
-                downloadBtn.disabled = false;
-                downloadBtn.zip = zip;
-            }
-        };
-        img.src = URL.createObjectURL(file);
-    });
-};
-
-function downloadImages() {
-    downloadBtn.zip.generateAsync({ type: "blob" }).then(content => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = "banners.zip";
-        a.click();
-    });
-}
-
-function resetAll() {
-    uploadInput.value = '';
-    exampleInput.value = '';
-    uploadInput.disabled = true;
-    exampleInput.disabled = true;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    downloadBtn.disabled = true;
-    currentFormat = null;
-    exampleImg = null;
-}
-
-function roundRect(ctx, x, y, width, height, radius) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-}
-
-</script>
+    <!-- 필수 JSZip 라이브러리 포함 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
