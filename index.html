@@ -1,39 +1,39 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex">
     <title>배너 합성 사이트</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>배너 합성 사이트</h1>
 
-    <div class="upload-section">
-        <label>예시 비주얼 업로드:</label>
-        <input type="file" id="sampleVisual" accept="image/*">
-    </div>
+<h1>배너 합성 사이트</h1>
 
-    <div class="upload-section">
-        <label>합성 희망 비주얼 업로드 (여러 개 가능):</label>
-        <input type="file" id="compositionVisuals" accept="image/*" multiple>
-    </div>
+<div class="button-container">
+    <button onclick="selectFormat('biz2')">Biz 2:1</button>
+    <button onclick="selectFormat('biz1')">Biz 1:1</button>
+    <button onclick="selectFormat('mo2')">Mo 2:1</button>
+</div>
 
-    <div class="button-section">
-        <button onclick="composeBanner('biz2_1')">Biz 2:1 합성</button>
-        <button onclick="composeBanner('biz1_1')">Biz 1:1 합성</button>
-        <button onclick="composeBanner('mo2_1')">Mo 2:1 합성</button>
-    </div>
+<div class="upload-container">
+    <label>예시 배너 업로드:</label>
+    <input type="file" id="exampleImage" accept="image/*">
+</div>
 
-    <div>
-        <button onclick="downloadZip()">ZIP 다운로드</button>
-    </div>
+<div class="upload-container">
+    <label>합성 비주얼 업로드 (여러 개 가능):</label>
+    <input type="file" id="visualImages" accept="image/*" multiple>
+</div>
 
-    <canvas id="canvas" style="display:none;"></canvas>
+<canvas id="canvas" style="display:none;"></canvas>
 
-    <!-- 필수 JSZip 라이브러리 포함 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="script.js"></script>
+<div class="action-buttons">
+    <button id="downloadBtn" disabled>ZIP 다운로드</button>
+    <button id="resetBtn">초기화</button>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
