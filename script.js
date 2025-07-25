@@ -1,88 +1,136 @@
-function generateBanner(format) {
-  const files = document.getElementById('imageUpload').files;
-  if (files.length === 0) return alert("비주얼 이미지를 업로드하세요!");
+let selectedFormat = null;
+let exampleImage = null;
+let visualImages = [];
 
-  const zip = new JSZip();
+document.getElementById('exampleImage').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const img = new Image();
+        img.onload = () => {
+            exampleImage = img;
+            checkReady();
+        };
+        img.src = URL.createObjectURL(file);
+    }
+});
 
-  Array.from(files).forEach((file, index) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      img.onload = function () {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+document.getElementById('visualImages').addEventListener('change', (e) => {
+    visualImages = Array.from(e.target.files);
+    checkReady();
+});
 
-        let canvasWidth, canvasHeight, visualX, visualY, visualW, visualH, radius = 16;
+function selectFormat(format) {
+    selectedFormat = format;
+    checkReady();
+}
 
-        if (format === 'bizWide') {
-          canvasWidth = 1029;
-          canvasHeight = 258;
-          visualX = 543;
-          visualY = 36;
-          visualW = 438;
-          visualH = 186;
-        } else if (format === 'biz21') {
-          canvasWidth = 1029;
-          canvasHeight = 258;
-          visualX = 48;
-          visualY = 36;
-          visualW = 315;
-          visualH = 186;
-        } else if (format === 'biz11') {
-          canvasWidth = 1029;
-          canvasHeight = 258;
-          visualX = 260;
-          visualY = 36;
-          visualW = 186;
-          visualH = 186;
-        } else if (format === 'mo21') {
-          canvasWidth = 1200;
-          canvasHeight = 600;
-          visualX = 0;
-          visualY = 193;
-          visualW = 1200;
-          visualH = 497;
-        }
+function checkReady() {
+    const ready = selectedFormat && exampleImage && visualImages.length > 0;
+    document.getElementById('downloadBtn').disabled = !ready;
+}
 
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    if (!selectedFormat || !exampleImage || visualImages.length === 0) return;
 
-        // 둥근 사각형 마스크 그리기 (PNG만 적용)
-        if (format !== 'mo21') {
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(visualX + radius, visualY);
-          ctx.lineTo(visualX + visualW - radius, visualY);
-          ctx.quadraticCurveTo(visualX + visualW, visualY, visualX + visualW, visualY + radius);
-          ctx.lineTo(visualX + visualW, visualY + visualH - radius);
-          ctx.quadraticCurveTo(visualX + visualW, visualY + visualH, visualX + visualW - radius, visualY + visualH);
-          ctx.lineTo(visualX + radius, visualY + visualH);
-          ctx.quadraticCurveTo(visualX, visualY + visualH, visualX, visualY + visualH - radius);
-          ctx.lineTo(visualX, visualY + radius);
-          ctx.quadraticCurveTo(visualX, visualY, visualX + radius, visualY);
-          ctx.closePath();
-          ctx.clip();
-        }
+    const zip = new JSZip();
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-        ctx.drawImage(img, visualX, visualY, visualW, visualH);
+    const config = getFormatConfig(selectedFormat);
 
-        if (format !== 'mo21') ctx.restore();
+    Promise.all(visualImages.map(file => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = config.canvasWidth;
+                canvas.height = config.canvasHeight;
 
-        canvas.toBlob(function (blob) {
-          const ext = (format === 'mo21') ? 'jpg' : 'png';
-          zip.file(`${format}_${index + 1}.${ext}`, blob);
-          if (index === files.length - 1) {
-            setTimeout(() => {
-              zip.generateAsync({ type: 'blob' }).then(function (content) {
-                saveAs(content, `${format}_banners.zip`);
-              });
-            }, 300);
-          }
-        }, (format === 'mo21') ? 'image/jpeg' : 'image/png');
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+                // 배경
+                if (selectedFormat === 'mo2') {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
+                // 예시 배너 합성
+                ctx.drawImage(exampleImage, 0, 0, canvas.width, canvas.height);
+
+                // 비주얼 둥근 모서리 처리
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(config.visualX, config.visualY, config.visualWidth, config.visualHeight, config.borderRadius);
+                ctx.clip();
+
+                // 비율 유지 크롭
+                const ratio = Math.max(config.visualWidth / img.width, config.visualHeight / img.height);
+                const cropWidth = img.width * ratio;
+                const cropHeight = img.height * ratio;
+                const offsetX = (config.visualWidth - cropWidth) / 2;
+                const offsetY = (config.visualHeight - cropHeight) / 2;
+
+                ctx.drawImage(img, config.visualX + offsetX, config.visualY + offsetY, cropWidth, cropHeight);
+                ctx.restore();
+
+                canvas.toBlob((blob) => {
+                    const ext = selectedFormat === 'mo2' ? 'jpg' : 'png';
+                    zip.file(file.name.replace(/\.[^/.]+$/, '') + `.${ext}`, blob);
+                    resolve();
+                }, selectedFormat === 'mo2' ? 'image/jpeg' : 'image/png');
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    })).then(() => {
+        zip.generateAsync({ type: 'blob' }).then(content => {
+            saveAs(content, 'banners.zip');
+        });
+    });
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+    location.reload();
+});
+
+function getFormatConfig(format) {
+    if (format === 'biz2') {
+        return {
+            canvasWidth: 1029,
+            canvasHeight: 258,
+            visualX: 48,
+            visualY: 36,
+            visualWidth: 315,
+            visualHeight: 186,
+            borderRadius: 20
+        };
+    } else if (format === 'biz1') {
+        return {
+            canvasWidth: 1029,
+            canvasHeight: 258,
+            visualX: 260,
+            visualY: 44,
+            visualWidth: 170,
+            visualHeight: 170,
+            borderRadius: 20
+        };
+    } else if (format === 'mo2') {
+        return {
+            canvasWidth: 1200,
+            canvasHeight: 600,
+            visualX: 0,
+            visualY: 103,
+            visualWidth: 1200,
+            visualHeight: 497,
+            borderRadius: 0
+        };
+    } else if (format === 'bizWide') {
+        return {
+            canvasWidth: 1029,
+            canvasHeight: 258,
+            visualX: 543,
+            visualY: 36,
+            visualWidth: 438,
+            visualHeight: 186,
+            borderRadius: 20
+        };
+    }
 }
