@@ -112,6 +112,16 @@ function getFormatConfig(format) {
             visualHeight: 170,
             borderRadius: 20
         };
+    } else if (format === 'biz wide') {
+        return {
+            canvasWidth: 1029,
+            canvasHeight: 258,
+            visualX: 543,
+            visualY: 36,
+            visualWidth: 438,
+            visualHeight: 186,
+            borderRadius: 20
+        };
     } else if (format === 'mo2') {
         return {
             canvasWidth: 1200,
@@ -121,16 +131,6 @@ function getFormatConfig(format) {
             visualWidth: 1200,
             visualHeight: 497,
             borderRadius: 0
-        };
-    } else if (format === 'bizWide') {
-        return {
-            canvasWidth: 1029,
-            canvasHeight: 258,
-            visualX: 543,
-            visualY: 36,
-            visualWidth: 438,
-            visualHeight: 186,
-            borderRadius: 20
         };
     }
 }
