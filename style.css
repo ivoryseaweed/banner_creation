@@ -1,22 +1,31 @@
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
 }
-
-.button-container button, .action-buttons button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+.container {
+  max-width: 500px;
+  margin: 0 auto;
 }
-
-.upload-container {
-    margin: 15px 0;
+.input-group, .button-group {
+  margin: 15px 0;
 }
-
+button {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 @media (max-width: 600px) {
-    .button-container button, .action-buttons button {
-        width: 90%;
-        margin: 5px auto;
-    }
+  .container {
+    width: 90%;
+  }
+  button {
+    width: 100%;
+    margin: 8px 0;
+  }
 }
