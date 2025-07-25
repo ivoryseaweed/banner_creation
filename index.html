@@ -1,25 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>배너 합성 사이트</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>배너 합성 사이트</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
-  <div class="container">
     <h1>배너 합성 사이트</h1>
-    <input type="file" id="imageUpload" multiple accept="image/*">
-    <div class="buttons">
-      <button onclick="generateBanner('biz21')">Biz 2:1</button>
-      <button onclick="generateBanner('biz11')">Biz 1:1</button>
-      <button onclick="generateBanner('mo21')">Mo 2:1</button>
-      <button onclick="generateBanner('bizWide')">Biz Wide</button>
-    </div>
-    <div id="previewArea"></div>
-  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="script.js"></script>
+    <div class="upload-section">
+        <label>예시 배너 업로드:</label>
+        <input type="file" id="exampleImage" accept="image/*">
+    </div>
+
+    <div class="upload-section">
+        <label>합성 비주얼 업로드 (여러개 가능):</label>
+        <input type="file" id="visualImages" accept="image/*" multiple>
+    </div>
+
+    <div class="button-section">
+        <button onclick="selectFormat('biz2')">Biz 2:1</button>
+        <button onclick="selectFormat('biz1')">Biz 1:1</button>
+        <button onclick="selectFormat('bizwide')">Biz Wide</button>
+        <button onclick="selectFormat('mo2')">Mo 2:1</button>
+    </div>
+
+    <div class="action-section">
+        <button id="downloadBtn" disabled>다운로드 (zip)</button>
+        <button id="resetBtn">초기화</button>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script src="script.js"></script>
 </body>
 </html>
