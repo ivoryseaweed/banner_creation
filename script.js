@@ -92,8 +92,9 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 });
 
 function getFormatConfig(format) {
+    let config = null;
     if (format === 'biz2') {
-        return {
+         config = {
             canvasWidth: 1029,
             canvasHeight: 258,
             visualX: 48,
@@ -103,7 +104,7 @@ function getFormatConfig(format) {
             borderRadius: 20
         };
     } else if (format === 'biz1') {
-        return {
+         config = {
             canvasWidth: 1029,
             canvasHeight: 258,
             visualX: 260,
@@ -113,7 +114,7 @@ function getFormatConfig(format) {
             borderRadius: 20
         };
     } else if (format === 'bizWide') {
-        return {
+         config = {
             canvasWidth: 1029,
             canvasHeight: 258,
             visualX: 543,
@@ -123,7 +124,7 @@ function getFormatConfig(format) {
             borderRadius: 20
         };
     } else if (format === 'mo2') {
-        return {
+         config = {
             canvasWidth: 1200,
             canvasHeight: 600,
             visualX: 0,
@@ -133,4 +134,6 @@ function getFormatConfig(format) {
             borderRadius: 0
         };
     }
+    console.log('config', config)
+    return config;
 }
