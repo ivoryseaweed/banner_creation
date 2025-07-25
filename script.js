@@ -112,7 +112,7 @@ function getFormatConfig(format) {
             visualHeight: 170,
             borderRadius: 20
         };
-    } else if (format === 'biz wide') {
+    } else if (format === 'bizWide') {
         return {
             canvasWidth: 1029,
             canvasHeight: 258,
